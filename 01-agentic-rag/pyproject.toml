@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "llm-zoomcamp-01-agentic-rag"
 version = "0.1.0"
@@ -5,6 +9,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "gitsource>=0.0.5",
     "jupyter>=1.1.1",
     "minsearch>=0.0.11",
     "openai>=2.37.0",
@@ -15,3 +20,6 @@ dependencies = [
     "sqlitesearch>=0.0.5",
     "toyaikit>=0.0.11",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentic_rag"]
