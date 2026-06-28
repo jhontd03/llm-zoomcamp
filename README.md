@@ -13,9 +13,9 @@ log as I work through [DataTalksClub's LLM Zoomcamp](https://github.com/DataTalk
 ![OpenAI](https://img.shields.io/badge/OpenAI-API-412991?logo=openai&logoColor=white)
 ![uv](https://img.shields.io/badge/uv-Package_Manager-DE5FE9)
 ![Jupyter](https://img.shields.io/badge/Jupyter-Notebooks-F37626?logo=jupyter&logoColor=white)
-![Status](https://img.shields.io/badge/Status-In_Progress-2EA44F)
+![Progress](https://img.shields.io/badge/Modules-2_of_7-2EA44F)
 
-> **Last updated:** Week 1 — Agentic RAG · June 2026
+> **Last updated:** Week 2 — Vector Search · June 2026
 
 </div>
 
@@ -42,8 +42,8 @@ The camp spans seven modules. I update this table every week as I ship.
 | # | Module | Focus | Status | Artifacts |
 |:-:|----------------|---------------------------------------------|:------:|:---------:|
 | 1 | **Agentic RAG** | Keyword search, prompt building, LLM calls, persistence, function calling, agentic loop | ✅ | [`01-agentic-rag`](./01-agentic-rag) |
-| 2 | **Vector Search** | Embeddings, semantic search, ANN, hybrid retrieval | 🔜 Next | — |
-| 3 | **Orchestration** | Workflows, chaining, state management | ⏳ Planned | — |
+| 2 | **Vector Search** | Embeddings, semantic search, persistence, pgvector, hybrid search | ✅ | [`02-vector-search`](./02-vector-search) |
+| 3 | **Orchestration** | Workflows, chaining, state management | 🔜 Next | — |
 | 4 | **Evaluation** | Retrieval + answer quality, LLM-as-a-judge | ⏳ Planned | — |
 | 5 | **Monitoring** | Tracing, drift, production observability | ⏳ Planned | — |
 | 6 | **Best Practices** | Production hardening, cost & latency | ⏳ Planned | — |
@@ -92,6 +92,39 @@ that decides for itself when to search, call tools, and stop.
 
 ---
 
+## ✅ Module 2 — Vector Search
+
+Moved beyond keyword matching to **semantic retrieval**: turning text into dense
+vectors and ranking by meaning rather than exact words.
+
+### What was built
+
+- **Embeddings from scratch** — converted text into 384-dimensional vectors with
+  `all-MiniLM-L6-v2`, both via `sentence-transformers` and a lightweight
+  **ONNX Runtime** embedder (~30x smaller, no PyTorch/CUDA, runs anywhere).
+  [`embedder.py`](./02-vector-search/src/vector_search/embedder.py) ·
+  [`download.py`](./02-vector-search/src/vector_search/download.py)
+- **Vector search by hand** — cosine similarity as a dot product over
+  normalized vectors, plus document chunking (`size=2000, step=1000`) so full
+  pages don't dilute their embeddings.
+- **Library-grade search** — swapped the hand-rolled loop for `minsearch`
+  `VectorSearch` and a `sqlitesearch`-backed vector store for persistence.
+  [`vector_search_persistent.ipynb`](./02-vector-search/notebooks/vector_search_persistent.ipynb)
+- **Production vector DB** — deployed **PostgreSQL with `pgvector`** via Docker
+  Compose to store and query vectors at scale.
+  [`vector_search_pgvector.ipynb`](./02-vector-search/notebooks/vector_search_pgvector.ipynb) ·
+  [`docker-compose.yml`](./02-vector-search/docker-compose.yml)
+- **Hybrid search** — combined vector + keyword results using **Reciprocal Rank
+  Fusion (RRF, k=60)**, getting the best of semantic and exact-term matching.
+
+### Key concepts applied
+
+`text embeddings` · `cosine similarity` · `approximate nearest neighbor` ·
+`document chunking` · `ONNX inference` · `pgvector / PostgreSQL` · `hybrid search`
+· `Reciprocal Rank Fusion` · `semantic RAG`
+
+---
+
 ## 🧠 What I'm learning
 
 Mapped to the skills the industry actually hires for:
@@ -102,7 +135,9 @@ Mapped to the skills the industry actually hires for:
 | Prompt engineering & instruction design | Module 1 |
 | Agentic systems & function calling | Module 1 |
 | Clean, extensible architecture | Module 1 |
-| Vector search & embeddings | Module 2 |
+| Vector search & embeddings | ✅ Module 2 |
+| Hybrid search & ranking fusion | ✅ Module 2 |
+| Production vector databases (pgvector) | ✅ Module 2 |
 | Workflow orchestration | Module 3 |
 | LLM evaluation (LLM-as-a-judge) | Module 4 |
 | LLM observability & monitoring | Module 5 |
@@ -117,9 +152,10 @@ Mapped to the skills the industry actually hires for:
 | Language | Python 3.12+ |
 | Package manager | [`uv`](https://docs.astral.sh/uv/) |
 | LLM provider | OpenAI API |
-| Search / retrieval | `minsearch`, `sqlitesearch`, `sentence-transformers` |
+| Embeddings | `all-MiniLM-L6-v2` (384-dim), `sentence-transformers`, ONNX Runtime |
+| Search / retrieval | `minsearch` (keyword + vector), `sqlitesearch`, hybrid (RRF) |
 | Notebooks | Jupyter |
-| Persistence | SQLite (Postgres-ready via `psycopg`) |
+| Persistence | SQLite, PostgreSQL + `pgvector` (Docker) |
 
 ---
 
@@ -134,9 +170,19 @@ Mapped to the skills the industry actually hires for:
 │   ├── src/agentic_rag/    # Reusable RAG package
 │   │   ├── ingest.py       #   data loading + index building
 │   │   └── rag_helper.py   #   RAG + agentic core
-│   ├── pyproject.toml      # uv / hatch project config
-│   └── uv.lock
-├── 02-vector-search/       # 🔜 Next module
+│   └── pyproject.toml      # uv / hatch project config
+├── 02-vector-search/
+│   ├── lessons/            # Module lesson notes (reference)
+│   ├── notebooks/          # vector search, persistent, pgvector
+│   ├── homework/           # Module 2 assignment
+│   ├── src/vector_search/  # Reusable vector-search package
+│   │   ├── embedder.py     #   lightweight ONNX embedder
+│   │   ├── download.py     #   fetch ONNX model from HuggingFace
+│   │   ├── ingest.py       #   embedding + index building
+│   │   └── rag_helper.py   #   RAG core (vector-based)
+│   ├── docker-compose.yml  # pgvector container
+│   └── pyproject.toml
+├── 03-orchestration/       # 🔜 Next module
 └── README.md
 ```
 
@@ -147,12 +193,15 @@ Mapped to the skills the industry actually hires for:
 > Requires [uv](https://docs.astral.sh/uv/) and Python 3.12+.
 
 ```bash
-# from any module directory, e.g. the first one
-cd 01-agentic-rag
+# from any module directory, e.g. module 2
+cd 02-vector-search
 uv sync                     # install dependencies from uv.lock
 
-# set your OpenAI key
-cp .env.example .env        # then edit .env with your key
+# set your OpenAI key (copy the template, then fill it in)
+cp .env.example .env
+
+# Module 2 also uses a pgvector container (optional but recommended)
+docker compose up -d
 
 # open the notebooks to follow along
 uv run jupyter lab
@@ -165,6 +214,7 @@ uv run jupyter lab
 | Week | Module | Highlights |
 |:----:|:-------|------------|
 | 1 | Agentic RAG | RAG from scratch, SQLite persistence, function calling, agentic loop |
+| 2 | Vector Search | Embeddings + ONNX embedder, vector search, pgvector, hybrid search (RRF) |
 
 ---
 
